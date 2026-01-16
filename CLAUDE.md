@@ -17,26 +17,30 @@ src/
 │   ├── api/
 │   │   └── chat/
 │   │       └── route.ts       # OpenAI chat completions endpoint
-│   ├── globals.css
+│   ├── globals.css            # Global styles + custom animations
 │   ├── layout.tsx
 │   └── page.tsx
 ├── components/
-│   ├── Chat.tsx               # Main chat interface
-│   ├── DebugPanel.tsx         # Collapsible debug panel for system analysis
+│   ├── Chat.tsx               # Main chat interface with reset + test integration
+│   ├── DebugPanel.tsx         # Collapsible debug panel with test results
+│   ├── TestScenarios.tsx      # Landing UI grid for test scenarios
 │   └── remedy/
 │       ├── index.ts           # Component exports
 │       ├── types.ts           # TypeScript interfaces
 │       ├── ResponseRenderer.tsx  # Assembles UI from JSON response
+│       ├── ResponseLoader.tsx # Loading skeleton with animations
 │       ├── Button.tsx         # Reusable button component
-│       ├── Summary.tsx        # Main response text
+│       ├── Summary.tsx        # Main response text with inline citations
 │       ├── SafetyAlert.tsx    # Warning messages (informational/caution/emergency)
 │       ├── ClarifyingQuestion.tsx  # Follow-up questions with options
 │       ├── Checklist.tsx      # Action items list
 │       ├── CTA.tsx            # Call-to-action buttons
-│       ├── Sources.tsx        # Reference links
+│       ├── Sources.tsx        # Reference links with hover previews
 │       └── ReturnToConversation.tsx  # Exit structured flow
+├── data/
+│   └── testScenarios.ts       # 12 test scenarios with expectations + evaluation
 └── prompts/
-    └── remedy-ux-assembly.ts  # System prompt for JSON-structured responses
+    └── remedy-ux-assembly-lite.ts  # System prompt for JSON-structured responses
 ```
 
 ## System Architecture
@@ -89,13 +93,43 @@ src/
 - Emergency mode suppresses non-essential UI
 - Clarifying questions disable free text input
 
+## Test Scenarios
+12 pre-built test scenarios validate the UX assembly system across all modes and intents.
+
+### Test Categories
+- **Informational Mode** - Basic explanations, light safety notes
+- **Medication Guidance** - Drug safety, contraindications
+- **Clarification Mode** - Ambiguous symptoms, vague inputs
+- **Emergency Mode** - Urgent triage, de-escalation
+- **Navigation** - Care system routing
+- **Prevention** - Wellness and prevention
+- **Chronic Care** - Ongoing condition management
+- **Stress Test** - Hybrid/complex questions
+
+### Test Evaluation
+Each test validates:
+- UX mode selection (informational/clarification/emergency)
+- Risk level assessment (low/medium/high)
+- Primary intent detection
+- Required components present
+- Forbidden components absent
+- Safety alert level and position
+- Free text input state
+
+Results show as: **Pass** (green), **Partial** (amber), **Fail** (red)
+
 ## Debug Panel
 A collapsible panel on the right side shows system analysis:
-- **User Input** - The question asked
-- **Intent Detection** - Primary intent, secondary intents, risk level (color-coded), reasoning
-- **UX Mode** - Selected mode and why
-- **Guardrails** - Boolean flags and allowed/blocked components
-- **Full JSON** - Complete API response
+- **Analysis Tab** - Intent detection, UX mode, guardrails, component selection
+- **Rules Engine Tab** - Applied stacking rules and constraints
+- **Full JSON Tab** - Complete API response
+- **Test Results Tab** - Evaluation against test expectations (only visible when running a test)
+
+### Debug Features
+- Response time tracking (ms)
+- Collapsible sections for each analysis area
+- Color-coded risk levels and test results
+- Panel icon indicates open/closed state
 
 ## Environment Variables
 - `OPENAI_API_KEY` - Required. Get from https://platform.openai.com/api-keys
@@ -110,3 +144,11 @@ https://github.com/PaulLoots/project-remedy-ux-assembly-demo
 
 ## Figma Design
 https://www.figma.com/design/icvB7zuoFgdjk0aAvYKaHH/Loblaw-Digital---Project-Remedy?node-id=2148-1141
+
+## UI Features
+- **Test Scenarios Landing** - 2-column grid of clickable test cards when no messages
+- **Reset Chat Button** - Clears conversation and returns to test scenarios
+- **Response Loader** - Skeleton animation while waiting for AI response
+- **Inline Citations** - Numbered references in summary text linking to sources
+- **Source Hover Previews** - Tooltip showing source details on citation hover
+- **Footer** - "Keep Confidential · Made by LCA" with link to latecheckout.agency

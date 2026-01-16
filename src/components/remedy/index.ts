@@ -7,3 +7,5 @@ export { CTA } from "./CTA";
 export { Sources } from "./Sources";
 export { ReturnToConversation } from "./ReturnToConversation";
 export { ResponseRenderer } from "./ResponseRenderer";
+export { ResponseLoader } from "./ResponseLoader";
+export { CitationText } from "./CitationText";

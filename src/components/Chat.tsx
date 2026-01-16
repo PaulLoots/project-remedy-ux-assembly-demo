@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ResponseRenderer } from "./remedy";
+import { ResponseRenderer, ResponseLoader } from "./remedy";
 import { DebugPanel } from "./DebugPanel";
+import { TestScenarios } from "./TestScenarios";
 
 // Types for the structured response
 interface FinalUI {
@@ -22,6 +23,7 @@ interface StructuredResponse {
     mode: string;
     reason: string;
   };
+  [key: string]: unknown;
 }
 
 interface Message {
@@ -37,15 +39,22 @@ export default function Chat() {
   const [inputDisabled, setInputDisabled] = useState(false);
   const [debugPanelOpen, setDebugPanelOpen] = useState(false);
   const [latestUserQuestion, setLatestUserQuestion] = useState("");
+  const [lastLoadTime, setLastLoadTime] = useState<number | null>(null);
+  const [activeTestId, setActiveTestId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const loadStartTimeRef = useRef<number | null>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Use a small delay to ensure DOM has fully updated, then scroll
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 100);
   };
 
+  // Scroll when messages change or loading state changes
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,12 +66,23 @@ export default function Chat() {
     setInput("");
     setLatestUserQuestion(input.trim());
     setIsLoading(true);
+    loadStartTimeRef.current = Date.now();
 
     try {
+      // Format messages with structured data for conversation history
+      const formattedMessages = newMessages.map(m => ({
+        role: m.role,
+        content: m.content,
+        structured: m.structured ? {
+          ux_mode: m.structured.ux_mode,
+          response_content: m.structured,
+        } : undefined,
+      }));
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: formattedMessages, isNewConversation: true }),
       });
 
       const data = await response.json();
@@ -95,7 +115,7 @@ export default function Chat() {
 
         const assistantMessage: Message = {
           role: "assistant",
-          content: data.rawContent || "Failed to parse response",
+          content: "Sorry, something went wrong. Please try again.",
           structured: null,
         };
         setMessages([...newMessages, assistantMessage]);
@@ -111,6 +131,9 @@ export default function Chat() {
         },
       ]);
     } finally {
+      if (loadStartTimeRef.current) {
+        setLastLoadTime(Date.now() - loadStartTimeRef.current);
+      }
       setIsLoading(false);
     }
   };
@@ -127,13 +150,24 @@ export default function Chat() {
 
   const handleOptionSubmit = async (option: string) => {
     setIsLoading(true);
+    loadStartTimeRef.current = Date.now();
     const newMessages = [...messages, { role: "user" as const, content: option }];
 
     try {
+      // Format messages with structured data for conversation history
+      const formattedMessages = newMessages.map(m => ({
+        role: m.role,
+        content: m.content,
+        structured: m.structured ? {
+          ux_mode: m.structured.ux_mode,
+          response_content: m.structured,
+        } : undefined,
+      }));
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: formattedMessages, isNewConversation: false }),
       });
 
       const data = await response.json();
@@ -156,14 +190,23 @@ export default function Chat() {
       } else {
         const assistantMessage: Message = {
           role: "assistant",
-          content: data.rawContent || "Failed to parse response",
+          content: "Sorry, something went wrong. Please try again.",
           structured: null,
         };
         setMessages([...newMessages, assistantMessage]);
       }
     } catch (error) {
       console.error("Error:", error);
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: "Sorry, something went wrong. Please try again.",
+        structured: null,
+      };
+      setMessages([...newMessages, assistantMessage]);
     } finally {
+      if (loadStartTimeRef.current) {
+        setLastLoadTime(Date.now() - loadStartTimeRef.current);
+      }
       setIsLoading(false);
     }
   };
@@ -175,6 +218,94 @@ export default function Chat() {
 
   const handleCTAClick = (type: "primary" | "secondary") => {
     console.log("CTA clicked:", type);
+  };
+
+  const handleResetChat = () => {
+    setMessages([]);
+    setInput("");
+    setInputDisabled(false);
+    setLatestUserQuestion("");
+    setLastLoadTime(null);
+    setActiveTestId(null);
+    loadStartTimeRef.current = null;
+  };
+
+  const handleSelectTest = (testInput: string, testId: number) => {
+    setActiveTestId(testId);
+    setInput(testInput);
+    // Auto-submit after a brief delay to show the input
+    setTimeout(() => {
+      // Manually trigger the submit logic
+      const userMessage: Message = { role: "user", content: testInput };
+      const newMessages = [...messages, userMessage];
+      setMessages(newMessages);
+      setInput("");
+      setLatestUserQuestion(testInput);
+      setIsLoading(true);
+      loadStartTimeRef.current = Date.now();
+
+      // Call API
+      (async () => {
+        try {
+          const formattedMessages = newMessages.map(m => ({
+            role: m.role,
+            content: m.content,
+            structured: m.structured ? {
+              ux_mode: m.structured.ux_mode,
+              response_content: m.structured,
+            } : undefined,
+          }));
+
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messages: formattedMessages, isNewConversation: true }),
+          });
+
+          const data = await response.json();
+          console.log("API Response:", JSON.stringify(data, null, 2));
+
+          if (!response.ok) {
+            throw new Error(data.error || "Failed to get response");
+          }
+
+          if (data.success && data.structured) {
+            const structured = data.structured as StructuredResponse;
+            if (structured.exit_state?.waiting_for_structured_input) {
+              setInputDisabled(true);
+            }
+            const assistantMessage: Message = {
+              role: "assistant",
+              content: "",
+              structured: structured,
+            };
+            setMessages([...newMessages, assistantMessage]);
+          } else {
+            const assistantMessage: Message = {
+              role: "assistant",
+              content: "Sorry, something went wrong. Please try again.",
+              structured: null,
+            };
+            setMessages([...newMessages, assistantMessage]);
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          setMessages([
+            ...newMessages,
+            {
+              role: "assistant",
+              content: "Sorry, there was an error processing your request.",
+              structured: null,
+            },
+          ]);
+        } finally {
+          if (loadStartTimeRef.current) {
+            setLastLoadTime(Date.now() - loadStartTimeRef.current);
+          }
+          setIsLoading(false);
+        }
+      })();
+    }, 100);
   };
 
   // Get the latest structured response for debug panel
@@ -199,14 +330,19 @@ export default function Chat() {
         </div>
 
         {/* Messages Area - Full screen with padding for header and input */}
-        <div className="flex-1 overflow-y-auto flex flex-col gap-6 justify-end px-0 pt-[160px] pb-[120px]">
-          {messages.length === 0 && (
-            <div className="text-center text-black/40 px-5">
-              Ask a health-related question
+        <div className="flex-1 scrollbar-stable flex flex-col gap-6 justify-end px-0 pt-[160px] pb-[120px]">
+          {/* Show test scenarios when no messages */}
+          {messages.length === 0 && !isLoading && (
+            <div className="flex-1 flex items-center justify-center">
+              <TestScenarios onSelectTest={handleSelectTest} />
             </div>
           )}
           {messages.map((message, index) => (
-            <div key={index} className="w-full max-w-[520px] mx-auto">
+            <div
+              key={index}
+              className="w-full max-w-[520px] mx-auto animate-fade-in-up opacity-0"
+              style={{ animationFillMode: "forwards" }}
+            >
               {message.role === "user" ? (
                 // User message - right aligned with bubble
                 <div className="flex flex-col items-end px-5">
@@ -220,21 +356,8 @@ export default function Chat() {
                 // Assistant structured response - left aligned, no bubble
                 <div className="flex flex-col items-start max-w-[380px]">
                   <ResponseRenderer
-                    finalUI={
-                      message.structured.final_ui as FinalUI & {
-                        components: Array<{
-                          type:
-                            | "summary"
-                            | "safety_alert"
-                            | "clarifying_question"
-                            | "checklist"
-                            | "cta"
-                            | "sources"
-                            | "return_to_conversation";
-                          content: unknown;
-                        }>;
-                      }
-                    }
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    finalUI={message.structured.final_ui as any}
                     onOptionSelect={handleOptionSelect}
                     onCTAClick={handleCTAClick}
                     onReturnToConversation={handleReturnToConversation}
@@ -251,17 +374,19 @@ export default function Chat() {
             </div>
           ))}
           {isLoading && (
-            <div className="w-full max-w-[520px] mx-auto">
-              <div className="flex flex-col items-start px-5">
-                <div className="flex space-x-2 py-4">
-                  <div className="w-2 h-2 bg-black/30 rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-black/30 rounded-full animate-bounce [animation-delay:0.1s]" />
-                  <div className="w-2 h-2 bg-black/30 rounded-full animate-bounce [animation-delay:0.2s]" />
-                </div>
+            <div
+              className="w-full max-w-[520px] mx-auto animate-fade-in-up opacity-0"
+              style={{ animationFillMode: "forwards" }}
+            >
+              <div className="flex flex-col items-start max-w-[380px]">
+                <ResponseLoader
+                  isLoading={isLoading}
+                  onLoadTimeUpdate={setLastLoadTime}
+                />
               </div>
             </div>
           )}
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} className="h-1 shrink-0" />
         </div>
 
         {/* Prompt Bar - Fixed at bottom, centered in main area */}
@@ -284,7 +409,9 @@ export default function Chat() {
                 placeholder={
                   inputDisabled
                     ? "Please select an option above"
-                    : "How can we help?"
+                    : messages.length === 0
+                    ? "Ask a health-related question"
+                    : "Ask a follow-up"
                 }
                 className="flex-1 py-2 text-base font-medium text-black placeholder:text-[#a6a6a6] bg-transparent focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading || inputDisabled}
@@ -323,13 +450,62 @@ export default function Chat() {
         </div>
       </div>
 
+      {/* Reset Chat Button - Fixed top right, left of Debug button */}
+      {messages.length > 0 && (
+        <button
+          onClick={handleResetChat}
+          className={`fixed top-4 z-30 flex items-center gap-2 px-3 py-2 text-sm font-medium text-black/60 hover:text-black hover:bg-black/5 rounded-lg transition-all duration-300 ${
+            debugPanelOpen ? "right-[500px]" : "right-[108px]"
+          }`}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+          >
+            <path
+              d="M2 8C2 11.3137 4.68629 14 8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C5.87827 2 4.0066 3.12058 3 4.80385"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+            <path
+              d="M3 2V5H6"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span>Reset</span>
+        </button>
+      )}
+
       {/* Debug Panel */}
       <DebugPanel
         isOpen={debugPanelOpen}
         onToggle={() => setDebugPanelOpen(!debugPanelOpen)}
         latestResponse={latestStructuredResponse}
         userQuestion={latestUserQuestion}
+        loadTimeMs={lastLoadTime}
+        activeTestId={activeTestId}
       />
+
+      {/* Footer - Bottom right */}
+      <div className={`fixed bottom-4 z-10 text-xs text-black/40 transition-all duration-300 ${
+        debugPanelOpen ? "right-[412px]" : "right-4"
+      }`}>
+        <span>Keep Confidential · Made by </span>
+        <a
+          href="https://www.latecheckout.agency/#hero"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-black/50 hover:text-black/70 underline underline-offset-2 transition-colors"
+        >
+          LCA
+        </a>
+      </div>
     </div>
   );
 }
