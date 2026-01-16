@@ -13,8 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Claude Chat",
-  description: "Chat with Claude AI",
+  title: "Project Remedy | UX Assembly Demo",
+  description: "A medical guidance chatbot with AI-driven modular UI components for structured health responses.",
+  keywords: ["healthcare", "chatbot", "medical guidance", "AI", "UX assembly"],
+  authors: [{ name: "Late Checkout Agency", url: "https://www.latecheckout.agency" }],
+  openGraph: {
+    title: "Project Remedy | UX Assembly Demo",
+    description: "A medical guidance chatbot with AI-driven modular UI components for structured health responses.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
