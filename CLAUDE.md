@@ -94,7 +94,7 @@ src/
 - Clarifying questions disable free text input
 
 ## Test Scenarios
-12 pre-built test scenarios validate the UX assembly system across all modes and intents.
+14 pre-built test scenarios validate the UX assembly system across all modes and intents.
 
 ### Test Categories
 - **Informational Mode** - Basic explanations, light safety notes
@@ -146,9 +146,19 @@ https://github.com/PaulLoots/project-remedy-ux-assembly-demo
 https://www.figma.com/design/icvB7zuoFgdjk0aAvYKaHH/Loblaw-Digital---Project-Remedy?node-id=2148-1141
 
 ## UI Features
-- **Test Scenarios Landing** - 2-column grid of clickable test cards when no messages
-- **Reset Chat Button** - Clears conversation and returns to test scenarios
+- **Test Scenarios Landing** - Single column on mobile, 2-column grid on desktop
+- **Reset Chat Button** - Clears conversation and returns to test scenarios (stops loading if active)
 - **Response Loader** - Skeleton animation while waiting for AI response
 - **Inline Citations** - Numbered references in summary text linking to sources
 - **Source Hover Previews** - Tooltip showing source details on citation hover
-- **Footer** - "Keep Confidential · Made by LCA" with link to latecheckout.agency
+- **Footer** - "Keep Confidential · Made by LCA" with link to latecheckout.agency (desktop only)
+
+## Mobile Responsiveness
+The app is fully responsive with mobile-first design:
+- **Header** - Stacked title on mobile, inline on desktop; gradient fade background
+- **Debug Panel** - Full-screen overlay on mobile with backdrop, floating panel on desktop
+- **Debug Toggle** - Lab flask icon on mobile, "Debug" text + panel icon on desktop
+- **Reset Button** - Icon-only on mobile, icon + text on desktop
+- **Components** - All remedy components use responsive breakpoints (md: prefix)
+- **Test Scenarios** - Full-width cards on mobile for better readability
+- **Buttons** - Smaller padding and rounded corners on mobile

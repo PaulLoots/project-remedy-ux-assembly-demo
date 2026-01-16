@@ -34,8 +34,8 @@ export function SafetyAlert({ level, title, message }: SafetyAlertProps) {
   return (
     <div className="px-1">
       <div
-        className={`px-4 py-5 rounded-3xl w-full ${containerStyles[level]} ${
-          isInformational ? "flex gap-2.5 items-center" : "flex flex-col gap-2.5"
+        className={`px-3 md:px-4 py-4 md:py-5 rounded-2xl md:rounded-3xl w-full ${containerStyles[level]} ${
+          isInformational ? "flex gap-2 md:gap-2.5 items-center" : "flex flex-col gap-2 md:gap-2.5"
         }`}
       >
         {isInformational ? (
@@ -44,7 +44,7 @@ export function SafetyAlert({ level, title, message }: SafetyAlertProps) {
             <div className={`shrink-0 ${iconColors[level]}`}>
               <AlertIcon />
             </div>
-            <p className="flex-1 font-normal text-sm text-black leading-normal">
+            <p className="flex-1 font-normal text-xs md:text-sm text-black leading-normal">
               {message}
             </p>
           </>
@@ -55,11 +55,11 @@ export function SafetyAlert({ level, title, message }: SafetyAlertProps) {
               <div className={`shrink-0 ${iconColors[level]}`}>
                 <AlertIcon />
               </div>
-              <p className={`flex-1 font-semibold text-base ${titleColors[level]}`}>
+              <p className={`flex-1 font-semibold text-sm md:text-base ${titleColors[level]}`}>
                 {title || "This could be serious"}
               </p>
             </div>
-            <p className="font-normal text-sm text-black leading-normal">
+            <p className="font-normal text-xs md:text-sm text-black leading-normal">
               {message}
             </p>
           </>

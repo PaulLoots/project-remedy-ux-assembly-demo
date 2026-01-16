@@ -283,16 +283,16 @@ export function Sources({ sources, highlightedIndex }: SourcesProps) {
   };
 
   return (
-    <div ref={containerRef} className="flex flex-col gap-2.5 px-5 py-3 w-full">
+    <div ref={containerRef} className="flex flex-col gap-2 md:gap-2.5 px-3 md:px-5 py-2 md:py-3 w-full">
       {/* Header row - always shows toggle button in same position */}
       <div className="flex items-center justify-between">
-        <p className="font-normal text-sm text-black/60">
+        <p className="font-normal text-xs md:text-sm text-black/60">
           {sources.length} {sources.length === 1 ? "Source" : "Sources"}
         </p>
         {hasMore && (
           <button
             onClick={handleToggle}
-            className="flex items-center gap-1 text-sm text-black/60 hover:text-black transition-colors"
+            className="flex items-center gap-1 text-xs md:text-sm text-black/60 hover:text-black transition-colors"
           >
             <span>{expanded ? "Show less" : `${hiddenCount} More`}</span>
             <svg

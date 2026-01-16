@@ -12,8 +12,8 @@ export function ReturnToConversation({
   onReturn,
 }: ReturnToConversationProps) {
   return (
-    <div className="flex flex-col gap-5 p-5 w-full">
-      <p className="font-semibold text-base text-black">{message}</p>
+    <div className="flex flex-col gap-3 md:gap-5 p-3 md:p-5 w-full">
+      <p className="font-semibold text-sm md:text-base text-black">{message}</p>
       <Button variant="neutral" onClick={onReturn}>
         <span className="flex items-center justify-center gap-2">
           <svg

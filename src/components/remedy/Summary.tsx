@@ -17,8 +17,8 @@ interface SummaryProps {
 
 export function Summary({ content, sources = [], onCitationHover }: SummaryProps) {
   return (
-    <div className="p-5">
-      <p className="font-semibold text-base leading-5 text-black">
+    <div className="p-3 md:p-5">
+      <p className="font-semibold text-sm md:text-base leading-5 text-black">
         <CitationText text={content} sources={sources} onCitationHover={onCitationHover} />
       </p>
     </div>

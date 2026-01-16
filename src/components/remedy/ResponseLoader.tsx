@@ -137,7 +137,7 @@ export function ResponseLoader({ isLoading, onResolveComplete, onLoadTimeUpdate 
       aria-busy={isLoading}
     >
       {/* Active Phase - Single line with geometric loader */}
-      <div className="flex items-center gap-3 px-5 py-2">
+      <div className="flex items-center gap-2 md:gap-3 px-3 md:px-5 py-2">
         {/* Geometric loading indicator */}
         <div className={`shrink-0 ${prefersReducedMotion ? "" : "animate-loader-rotate"}`}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-black/60">
@@ -163,7 +163,7 @@ export function ResponseLoader({ isLoading, onResolveComplete, onLoadTimeUpdate 
           showSkeleton ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"
         }`}
       >
-        <div className={`px-5 py-3 space-y-4 ${prefersReducedMotion ? "" : "animate-fade-in"}`}>
+        <div className={`px-3 md:px-5 py-3 space-y-3 md:space-y-4 ${prefersReducedMotion ? "" : "animate-fade-in"}`}>
           {/* Summary text lines */}
           <div className="space-y-2.5">
             <div
@@ -212,7 +212,7 @@ export function ResponseLoader({ isLoading, onResolveComplete, onLoadTimeUpdate 
       {/* Long Wait Message */}
       {showLongWait && (
         <p
-          className="text-xs text-black/40 px-5 mt-2 animate-fade-in"
+          className="text-xs text-black/40 px-3 md:px-5 mt-2 animate-fade-in"
           aria-live="polite"
         >
           Still working on your response...
@@ -220,7 +220,7 @@ export function ResponseLoader({ isLoading, onResolveComplete, onLoadTimeUpdate 
       )}
 
       {/* Emergency disclaimer */}
-      <p className="text-xs text-black/40 px-5 mt-3">
+      <p className="text-xs text-black/40 px-3 md:px-5 mt-3">
         If you feel in immediate danger, seek emergency help.
       </p>
     </div>

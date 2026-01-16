@@ -203,7 +203,6 @@ export function ResponseRenderer({
                 <ClarifyingQuestion
                   question={question.question}
                   options={question.options}
-                  allowsExit={question.allows_exit}
                   onSelect={onOptionSelect}
                 />
               </div>

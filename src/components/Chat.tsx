@@ -60,6 +60,11 @@ export default function Chat() {
     e.preventDefault();
     if (!input.trim() || isLoading || inputDisabled) return;
 
+    // Clear test results if this is a follow-up message (not the initial test)
+    if (messages.length > 0) {
+      setActiveTestId(null);
+    }
+
     const userMessage: Message = { role: "user", content: input.trim() };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
@@ -141,6 +146,8 @@ export default function Chat() {
   const handleOptionSelect = (option: string) => {
     console.log("Option selected:", option);
     setInputDisabled(false);
+    // Clear test results after first response (follow-up is no longer the test scenario)
+    setActiveTestId(null);
     // Send the selected option as a new message
     const userMessage: Message = { role: "user", content: option };
     setMessages([...messages, userMessage]);
@@ -223,6 +230,7 @@ export default function Chat() {
   const handleResetChat = () => {
     setMessages([]);
     setInput("");
+    setIsLoading(false);
     setInputDisabled(false);
     setLatestUserQuestion("");
     setLastLoadTime(null);
@@ -315,22 +323,120 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] flex">
-      {/* Main Chat Area - shifts left when panel is open */}
+      {/* Main Chat Area - shifts left when panel is open on desktop */}
       <div
         className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
-          debugPanelOpen ? "mr-[400px]" : "mr-0"
+          debugPanelOpen ? "md:mr-[418px]" : "mr-0"
         }`}
       >
-        {/* Header - Fixed top left */}
-        <div className="fixed top-8 left-8 z-10">
-          <p className="text-black font-bold text-base uppercase tracking-wide">
-            Project Remedy
-          </p>
-          <p className="text-black font-bold text-4xl">Assembled UI Demo</p>
+        {/* Header - Fixed within chat area, shifts with content when debug panel opens */}
+        <div className={`fixed top-0 left-0 z-20 transition-all duration-300 ${
+          debugPanelOpen ? "right-[418px]" : "right-0"
+        } max-md:right-0`}>
+          <div className="px-4 py-3 md:px-6 md:py-4 bg-gradient-to-b from-[#f5f5f5] via-[#f5f5f5] to-transparent">
+            <div className="flex items-center justify-between">
+              {/* Left side - Title: stacked on mobile, inline on desktop */}
+              <div className="flex flex-col md:flex-row md:items-baseline md:gap-2">
+                <p className="text-black font-bold text-xs md:text-base uppercase tracking-wide">
+                  Project Remedy
+                </p>
+                <span className="hidden md:inline text-black/30 text-base">·</span>
+                <p className="text-black/50 font-medium text-xs md:text-base">Assembled UI Demo</p>
+              </div>
+
+              {/* Right side - Action buttons */}
+              <div className="flex items-center gap-1 md:gap-2">
+                {/* Reset button - only show when there are messages or loading */}
+                {(messages.length > 0 || isLoading) && (
+                  <button
+                    onClick={handleResetChat}
+                    className="flex items-center gap-1.5 px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-medium text-black/60 hover:text-black hover:bg-black/5 rounded-lg transition-colors"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      className="md:w-4 md:h-4"
+                    >
+                      <path
+                        d="M2 8C2 11.3137 4.68629 14 8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C5.87827 2 4.0066 3.12058 3 4.80385"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M3 2V5H6"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <span className="hidden md:inline">Reset</span>
+                  </button>
+                )}
+
+                {/* Debug toggle button */}
+                <button
+                  onClick={() => setDebugPanelOpen(!debugPanelOpen)}
+                  className={`flex items-center gap-2 px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-lg transition-colors ${
+                    debugPanelOpen
+                      ? "text-black bg-black/5"
+                      : "text-black/60 hover:text-black hover:bg-black/5"
+                  }`}
+                >
+                  {/* Mobile: Lab flask icon */}
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="md:hidden"
+                  >
+                    <path
+                      d="M9 3V8.4C9 8.84 8.78 9.25 8.43 9.52L3.71 13.19C2.65 13.99 2 15.22 2 16.52V18C2 20.21 3.79 22 6 22H18C20.21 22 22 20.21 22 18V16.52C22 15.22 21.35 13.99 20.29 13.19L15.57 9.52C15.22 9.25 15 8.84 15 8.4V3"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path d="M8 3H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M6 15H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <circle cx="10" cy="18" r="1" fill="currentColor" />
+                    <circle cx="14" cy="17" r="0.75" fill="currentColor" />
+                  </svg>
+                  {/* Desktop: Debug text + panel icon */}
+                  <span className="hidden md:inline">Debug</span>
+                  <svg
+                    width="16"
+                    height="14"
+                    viewBox="0 0 20 16"
+                    fill="none"
+                    className="hidden md:block"
+                  >
+                    <path
+                      d={debugPanelOpen ? "M8 3L13 8L8 13" : "M10 3L5 8L10 13"}
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M17 2V14"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Messages Area - Full screen with padding for header and input */}
-        <div className="flex-1 scrollbar-stable flex flex-col gap-6 justify-end px-0 pt-[160px] pb-[120px]">
+        <div className="flex-1 scrollbar-stable flex flex-col gap-4 md:gap-6 justify-end px-0 pt-[60px] md:pt-[100px] pb-[100px] md:pb-[120px]">
           {/* Show test scenarios when no messages */}
           {messages.length === 0 && !isLoading && (
             <div className="flex-1 flex items-center justify-center">
@@ -340,21 +446,21 @@ export default function Chat() {
           {messages.map((message, index) => (
             <div
               key={index}
-              className="w-full max-w-[520px] mx-auto animate-fade-in-up opacity-0"
+              className="w-full max-w-[520px] mx-auto px-3 md:px-0 animate-fade-in-up opacity-0"
               style={{ animationFillMode: "forwards" }}
             >
               {message.role === "user" ? (
                 // User message - right aligned with bubble
-                <div className="flex flex-col items-end px-5">
-                  <div className="bg-black/5 border border-black/10 rounded-[22px] px-4 py-2 max-w-[380px]">
-                    <p className="text-[#1e1e1e] text-base leading-[1.2] tracking-[-0.32px]">
+                <div className="flex flex-col items-end px-2 md:px-5">
+                  <div className="bg-black/5 border border-black/10 rounded-[22px] px-4 py-2 max-w-[85%] md:max-w-[380px]">
+                    <p className="text-[#1e1e1e] text-sm md:text-base leading-[1.2] tracking-[-0.32px]">
                       {message.content}
                     </p>
                   </div>
                 </div>
               ) : message.structured?.final_ui ? (
                 // Assistant structured response - left aligned, no bubble
-                <div className="flex flex-col items-start max-w-[380px]">
+                <div className="flex flex-col items-start max-w-full md:max-w-[380px]">
                   <ResponseRenderer
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     finalUI={message.structured.final_ui as any}
@@ -365,8 +471,8 @@ export default function Chat() {
                 </div>
               ) : (
                 // Fallback text response
-                <div className="flex flex-col items-start px-5 max-w-[380px]">
-                  <p className="text-black text-base whitespace-pre-wrap">
+                <div className="flex flex-col items-start px-2 md:px-5 max-w-full md:max-w-[380px]">
+                  <p className="text-black text-sm md:text-base whitespace-pre-wrap">
                     {message.content}
                   </p>
                 </div>
@@ -375,10 +481,10 @@ export default function Chat() {
           ))}
           {isLoading && (
             <div
-              className="w-full max-w-[520px] mx-auto animate-fade-in-up opacity-0"
+              className="w-full max-w-[520px] mx-auto px-3 md:px-0 animate-fade-in-up opacity-0"
               style={{ animationFillMode: "forwards" }}
             >
-              <div className="flex flex-col items-start max-w-[380px]">
+              <div className="flex flex-col items-start max-w-full md:max-w-[380px]">
                 <ResponseLoader
                   isLoading={isLoading}
                   onLoadTimeUpdate={setLastLoadTime}
@@ -391,15 +497,17 @@ export default function Chat() {
 
         {/* Prompt Bar - Fixed at bottom, centered in main area */}
         <div
-          className={`fixed bottom-8 w-full max-w-[520px] px-4 transition-all duration-300 ${
+          className={`fixed bottom-4 md:bottom-8 w-full max-w-[520px] px-3 md:px-4 transition-all duration-300 ${
             debugPanelOpen
-              ? "left-[calc(50%-200px)] -translate-x-1/2"
+              ? "md:left-[calc(50%-200px)] md:-translate-x-1/2 left-1/2 -translate-x-1/2"
               : "left-1/2 -translate-x-1/2"
           }`}
         >
           <form
             onSubmit={handleSubmit}
-            className="bg-white border border-black/20 rounded-[34px] p-2 shadow-sm"
+            className={`bg-white border border-black/20 rounded-[28px] md:rounded-[34px] p-1.5 md:p-2 shadow-sm transition-opacity duration-300 ${
+              inputDisabled ? "opacity-40" : "opacity-100"
+            }`}
           >
             <div className="flex items-center gap-2 pl-3">
               <input
@@ -413,21 +521,22 @@ export default function Chat() {
                     ? "Ask a health-related question"
                     : "Ask a follow-up"
                 }
-                className="flex-1 py-2 text-base font-medium text-black placeholder:text-[#a6a6a6] bg-transparent focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-1.5 md:py-2 text-sm md:text-base font-medium text-black placeholder:text-[#a6a6a6] bg-transparent focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading || inputDisabled}
               />
               <button
                 type="submit"
                 disabled={isLoading || !input.trim() || inputDisabled}
-                className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+                className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-black text-white flex items-center justify-center hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
                 aria-label="Send message"
               >
                 <svg
-                  width="20"
-                  height="20"
+                  width="18"
+                  height="18"
                   viewBox="0 0 20 20"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
+                  className="md:w-5 md:h-5"
                 >
                   <path
                     d="M10 15.8333V4.16667"
@@ -450,38 +559,6 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Reset Chat Button - Fixed top right, left of Debug button */}
-      {messages.length > 0 && (
-        <button
-          onClick={handleResetChat}
-          className={`fixed top-4 z-30 flex items-center gap-2 px-3 py-2 text-sm font-medium text-black/60 hover:text-black hover:bg-black/5 rounded-lg transition-all duration-300 ${
-            debugPanelOpen ? "right-[500px]" : "right-[108px]"
-          }`}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-          >
-            <path
-              d="M2 8C2 11.3137 4.68629 14 8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C5.87827 2 4.0066 3.12058 3 4.80385"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <path
-              d="M3 2V5H6"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <span>Reset</span>
-        </button>
-      )}
-
       {/* Debug Panel */}
       <DebugPanel
         isOpen={debugPanelOpen}
@@ -492,9 +569,9 @@ export default function Chat() {
         activeTestId={activeTestId}
       />
 
-      {/* Footer - Bottom right */}
-      <div className={`fixed bottom-4 z-10 text-xs text-black/40 transition-all duration-300 ${
-        debugPanelOpen ? "right-[412px]" : "right-4"
+      {/* Footer - Bottom right (hidden on mobile) */}
+      <div className={`hidden md:block fixed bottom-4 z-10 text-xs text-black/40 transition-all duration-300 ${
+        debugPanelOpen ? "right-[430px]" : "right-4"
       }`}>
         <span>Keep Confidential · Made by </span>
         <a

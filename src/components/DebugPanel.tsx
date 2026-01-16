@@ -154,73 +154,60 @@ export function DebugPanel({
 
   return (
     <>
-      {/* Toggle Button - Fixed top right corner with panel icon */}
-      <button
-        onClick={onToggle}
-        className={`fixed top-4 z-30 flex items-center gap-2 px-3 py-2 text-sm font-medium transition-all duration-300 hover:bg-black/5 rounded-lg ${
-          isOpen ? "right-[396px] text-black" : "right-4 text-black/60 hover:text-black"
-        }`}
-      >
-        <span>Debug</span>
-        {/* Panel icon: chevron + vertical line */}
-        <svg
-          width="20"
-          height="16"
-          viewBox="0 0 20 16"
-          fill="none"
-          className="transition-transform duration-300"
-        >
-          {/* Chevron - flips based on open state */}
-          <path
-            d={isOpen ? "M8 3L13 8L8 13" : "M10 3L5 8L10 13"}
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Vertical line representing panel edge */}
-          <path
-            d="M17 2V14"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-      </button>
+      {/* Mobile overlay backdrop */}
+      {isOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/40 z-30 transition-opacity duration-300"
+          onClick={onToggle}
+        />
+      )}
 
-      {/* Panel - Floating with margins and border radius */}
+      {/* Panel - Desktop: Floating panel on right, Mobile: Full screen overlay */}
       <div
-        className={`fixed top-3 right-3 bottom-3 w-[380px] bg-white rounded-2xl border border-black/10 shadow-xl z-20 transition-all duration-300 ${
-          isOpen ? "translate-x-0 opacity-100" : "translate-x-[400px] opacity-0 pointer-events-none"
-        }`}
+        className={`fixed z-40 bg-white shadow-xl transition-all duration-300
+          inset-0 w-full
+          md:inset-auto md:top-3 md:right-3 md:bottom-3 md:left-auto md:w-[400px] md:rounded-2xl md:border md:border-black/10
+          ${isOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none"}`}
       >
-        <div className="h-full flex flex-col overflow-hidden rounded-2xl">
+        <div className="h-full flex flex-col overflow-hidden md:rounded-2xl">
           {/* Header */}
-          <div className="px-5 pt-5 pb-4 border-b border-black/5">
+          <div className="px-4 md:px-5 pt-4 md:pt-5 pb-3 md:pb-4 border-b border-black/5">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-base font-bold text-black">System Debug</h2>
-                <p className="text-xs text-black/40 mt-0.5">
+                <h2 className="text-sm md:text-base font-bold text-black">System Debug</h2>
+                <p className="text-[10px] md:text-xs text-black/40 mt-0.5">
                   AI analysis + rules engine
                 </p>
               </div>
-              {loadTimeMs !== null && loadTimeMs !== undefined && (
-                <div className={`text-sm font-semibold px-2.5 py-1 rounded-lg ${
-                  loadTimeMs < 2000 ? "bg-emerald-50 text-emerald-700" :
-                  loadTimeMs < 4000 ? "bg-amber-50 text-amber-700" :
-                  "bg-red-50 text-red-700"
-                }`}>
-                  {formatLoadTime(loadTimeMs)}
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                {loadTimeMs !== null && loadTimeMs !== undefined && (
+                  <div className={`text-xs md:text-sm font-semibold px-2 md:px-2.5 py-0.5 md:py-1 rounded-lg ${
+                    loadTimeMs < 2000 ? "bg-emerald-50 text-emerald-700" :
+                    loadTimeMs < 4000 ? "bg-amber-50 text-amber-700" :
+                    "bg-red-50 text-red-700"
+                  }`}>
+                    {formatLoadTime(loadTimeMs)}
+                  </div>
+                )}
+                {/* Mobile close button */}
+                <button
+                  onClick={onToggle}
+                  className="md:hidden p-1.5 -mr-1 text-black/40 hover:text-black hover:bg-black/5 rounded-lg transition-colors"
+                  aria-label="Close panel"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 px-5 py-2 border-b border-black/5 bg-black/[0.02]">
+          <div className="flex gap-1 px-4 md:px-5 py-2 border-b border-black/5 bg-black/[0.02]">
             <button
               onClick={() => setActiveTab("overview")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`px-2.5 md:px-3 py-1.5 text-[11px] md:text-xs font-medium rounded-md transition-all ${
                 activeTab === "overview"
                   ? "bg-black text-white"
                   : "text-black/50 hover:text-black hover:bg-black/5"
@@ -232,13 +219,14 @@ export function DebugPanel({
             {activeTestId && (
               <button
                 onClick={() => setActiveTab("test")}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${
+                className={`px-2.5 md:px-3 py-1.5 text-[11px] md:text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${
                   activeTab === "test"
                     ? "bg-black text-white"
                     : "text-black/50 hover:text-black hover:bg-black/5"
                 }`}
               >
-                Test Results
+                <span className="hidden sm:inline">Test Results</span>
+                <span className="sm:hidden">Tests</span>
                 {latestResponse && (
                   <TestResultBadge result={evaluateTest(
                     testScenarios.find(t => t.id === activeTestId)!,
@@ -249,7 +237,7 @@ export function DebugPanel({
             )}
             <button
               onClick={() => setActiveTab("json")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              className={`px-2.5 md:px-3 py-1.5 text-[11px] md:text-xs font-medium rounded-md transition-all ${
                 activeTab === "json"
                   ? "bg-black text-white"
                   : "text-black/50 hover:text-black hover:bg-black/5"

@@ -24,28 +24,28 @@ function TestCard({ scenario, onClick }: { scenario: TestScenario; onClick: () =
   return (
     <button
       onClick={onClick}
-      className={`group relative flex flex-col items-start text-left p-4 rounded-xl border ${colors.border} ${colors.bg} hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer`}
+      className={`group relative flex flex-col items-start text-left p-3 md:p-4 rounded-xl border ${colors.border} ${colors.bg} hover:shadow-md active:scale-[0.98] md:hover:scale-[1.02] transition-all duration-200 cursor-pointer`}
     >
       {/* Category badge */}
-      <div className="flex items-center gap-2 mb-2">
-        <span className={`text-[10px] font-semibold uppercase tracking-wider ${colors.text}`}>
+      <div className="flex items-center gap-2 mb-1.5 md:mb-2">
+        <span className={`text-[9px] md:text-[10px] font-semibold uppercase tracking-wider ${colors.text}`}>
           {scenario.category}
         </span>
-        <span className="text-[10px] text-black/30">#{scenario.id}</span>
+        <span className="text-[9px] md:text-[10px] text-black/30">#{scenario.id}</span>
       </div>
 
       {/* Input string - prioritized */}
-      <p className="text-sm font-medium text-black leading-snug mb-2 line-clamp-2">
+      <p className="text-xs md:text-sm font-medium text-black leading-snug mb-1.5 md:mb-2 line-clamp-2">
         &ldquo;{scenario.input}&rdquo;
       </p>
 
       {/* Test name - de-prioritized */}
-      <p className="text-xs text-black/40">
+      <p className="text-[10px] md:text-xs text-black/40">
         {scenario.name}
       </p>
 
-      {/* Hover indicator */}
-      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Hover indicator - hidden on mobile */}
+      <div className="hidden md:block absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={colors.text}>
           <path
             d="M6 3L11 8L6 13"
@@ -61,47 +61,29 @@ function TestCard({ scenario, onClick }: { scenario: TestScenario; onClick: () =
 }
 
 export function TestScenarios({ onSelectTest }: TestScenariosProps) {
-  // Split into two columns
-  const leftColumn = testScenarios.slice(0, 6);
-  const rightColumn = testScenarios.slice(6, 12);
-
   return (
-    <div className="w-full max-w-4xl mx-auto px-6 py-8 animate-fade-in">
+    <div className="w-full max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-8 animate-fade-in">
       {/* Header */}
-      <div className="text-center mb-8">
-        <h2 className="text-lg font-bold text-black mb-2">Test Scenarios</h2>
-        <p className="text-sm text-black/50 max-w-md mx-auto">
-          Click any scenario to run it through the UX Assembly system and validate the response.
+      <div className="text-center mb-4 md:mb-8">
+        <h2 className="text-base md:text-lg font-bold text-black mb-1 md:mb-2">Test Scenarios</h2>
+        <p className="text-xs md:text-sm text-black/50 max-w-md mx-auto">
+          Tap any scenario to run it through the UX Assembly system.
         </p>
       </div>
 
-      {/* Grid layout - 2 columns */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Left column */}
-        <div className="flex flex-col gap-3">
-          {leftColumn.map((scenario) => (
-            <TestCard
-              key={scenario.id}
-              scenario={scenario}
-              onClick={() => onSelectTest(scenario.input, scenario.id)}
-            />
-          ))}
-        </div>
-
-        {/* Right column */}
-        <div className="flex flex-col gap-3">
-          {rightColumn.map((scenario) => (
-            <TestCard
-              key={scenario.id}
-              scenario={scenario}
-              onClick={() => onSelectTest(scenario.input, scenario.id)}
-            />
-          ))}
-        </div>
+      {/* Single column on mobile, 2 columns on desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+        {testScenarios.map((scenario) => (
+          <TestCard
+            key={scenario.id}
+            scenario={scenario}
+            onClick={() => onSelectTest(scenario.input, scenario.id)}
+          />
+        ))}
       </div>
 
       {/* Footer hint */}
-      <p className="text-center text-xs text-black/30 mt-6">
+      <p className="text-center text-[10px] md:text-xs text-black/30 mt-4 md:mt-6">
         Or type your own question in the input below
       </p>
     </div>
